@@ -1,3 +1,4 @@
+import React from "react";
 import PublicFooter from "@/components/shared/PublicFooter";
 import PublicNavbar from "@/components/shared/PublicNavbar";
 

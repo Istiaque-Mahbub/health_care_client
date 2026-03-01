@@ -3,6 +3,7 @@
 
 import config from "@/config";
 import z from "zod";
+import { loginUser } from "./loginUser";
 
 const registerValidationZodSchema = z.object({
     name: z.string().min(1, { message: "Name is required" }),
@@ -66,15 +67,26 @@ export const registerPatient = async (_currentState: any, formData: any): Promis
         const res = await fetch(`${config.baseApiUrl}/user/create-patient`, {
             method: "POST",
             body: newFormData,
-        }).then(res => res.json());
+        })
+
+        const result = await res.json();
 
         console.log(res, "res");
 
-        return res;
+
+        if(result.success) {
+            await loginUser(_currentState,formData)
+        }
+
+        return result;
 
 
 
-    } catch (error) {
+    } catch (error: any) {
+
+         if (error?.digest?.startsWith('NEXT_REDIRECT')) {
+            throw error;
+        }
         console.log(error);
         return { error: "Registration failed" };
     }

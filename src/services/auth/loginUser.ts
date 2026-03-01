@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use server"
 
+import config from "@/config";
 import { getDefaultDashboardRoute, isValidRedirectForRole, UserRole } from "@/lib/auth.utils";
 import { parse } from "cookie";
 import jwt,{ JwtPayload } from "jsonwebtoken";
@@ -8,6 +9,7 @@ import jwt,{ JwtPayload } from "jsonwebtoken";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import z from "zod";
+import { setCookie } from "./tokenHandelers";
 
 const loginValidationZodSchema = z.object({
     email: z.email({
@@ -44,13 +46,15 @@ export const loginUser = async (_currentState: any, formData: any): Promise<any>
             }
         }
 
-        const res = await fetch("http://localhost:5000/api/v1/auth/login", {
+        const res = await fetch(`${config.baseApiUrl}/auth/login`, {
             method: "POST",
             body: JSON.stringify(loginData),
             headers: {
                 "Content-Type": "application/json",
             },
         });
+
+        const result = await res.json();
 
         const setCookieHeaders = res.headers.getSetCookie();
 
@@ -77,9 +81,9 @@ export const loginUser = async (_currentState: any, formData: any): Promise<any>
             throw new Error("Tokens not found in cookies");
         }
 
-        const cookieStore = await cookies();
+       
 
-        cookieStore.set("accessToken", accessTokenObject.accessToken, {
+        await setCookie("accessToken", accessTokenObject.accessToken, {
             secure: true,
             httpOnly: true,
             maxAge: parseInt(accessTokenObject['Max-Age']) || 1000 * 60 * 60,
@@ -87,7 +91,7 @@ export const loginUser = async (_currentState: any, formData: any): Promise<any>
             sameSite: accessTokenObject['SameSite'] || "none",
         });
 
-        cookieStore.set("refreshToken", refreshTokenObject.refreshToken, {
+        await setCookie("refreshToken", refreshTokenObject.refreshToken, {
             secure: true,
             httpOnly: true,
             maxAge: parseInt(refreshTokenObject['Max-Age']) || 1000 * 60 * 60 * 24 * 90,
@@ -108,6 +112,10 @@ export const loginUser = async (_currentState: any, formData: any): Promise<any>
 
         const userRole: UserRole = verifiedToken.role;
 
+        if(!result.success){
+            throw new Error(result.message || "Login failed");
+        }
+
 
         if (redirectTo) {
             const requestedPath = redirectTo.toString();
@@ -116,6 +124,8 @@ export const loginUser = async (_currentState: any, formData: any): Promise<any>
             } else {
                 redirect(getDefaultDashboardRoute(userRole));
             }
+        }else{
+            redirect(getDefaultDashboardRoute(userRole));
         }
 
     } catch (error: any) {
