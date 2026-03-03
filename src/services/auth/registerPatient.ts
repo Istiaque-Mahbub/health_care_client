@@ -88,6 +88,6 @@ export const registerPatient = async (_currentState: any, formData: any): Promis
             throw error;
         }
         console.log(error);
-        return { error: "Registration failed" };
+        return { success:false, message: `${process.env.NODE_ENV === "production" ? "Registration failedAn error occurred during registration. You might have entered incorrect data." : error.message}`  };
     }
 }

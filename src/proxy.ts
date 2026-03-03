@@ -3,10 +3,6 @@ import jwt, { JwtPayload } from "jsonwebtoken";
 import { getDefaultDashboardRoute, getRouteOwner, isAuthRoute, UserRole } from "./lib/auth.utils";
 import { deleteCookie } from "./services/auth/tokenHandelers";
 
-
-
-
-
 export async function proxy (request:NextRequest) {
 const pathname = request.nextUrl.pathname;
 
